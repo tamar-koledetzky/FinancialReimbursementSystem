@@ -22,6 +22,7 @@ const ClerkRequestDetails: React.FC = () => {
   const [approvalResult, setApprovalResult] = useState<ApprovalResult | null>(null);
   const [clerkId, setClerkId] = useState<string>('1');
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState<string>('');
 
   const loadRequestDetails = useCallback(async () => {
     try {
@@ -130,12 +131,20 @@ const ClerkRequestDetails: React.FC = () => {
   const handleRejectReimbursement = async () => {
     if (!request) return;
 
+    // Prompt for rejection reason
+    const reason = prompt('אנא הזן סיבת דחייה:');
+    if (!reason || reason.trim() === '') {
+      alert('חובה לציין סיבת דחייה');
+      return;
+    }
+
     try {
       setApproving(true);
-      // Call reject API (we need to create this)
+      // Call reject API with rejection reason
       const result = await clerkApi.rejectReimbursement(
         request.requestId,
-        parseInt(clerkId)
+        parseInt(clerkId),
+        reason.trim()
       );
       
       // Reload request details and budget

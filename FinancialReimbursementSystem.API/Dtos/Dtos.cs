@@ -32,13 +32,14 @@ namespace FinancialReimbursementSystem.Dtos
         public string IdentityNumber { get; set; } = string.Empty;
         public int TaxYear { get; set; }
         public DateTime RequestDate { get; set; }
-        public string Status { get; set; }
+        public string Status { get; set; } = string.Empty;
         public decimal? CalculatedAmount { get; set; }
         public decimal? ApprovedAmount { get; set; }
         public DateTime? CalculationDate { get; set; }
         public DateTime? ApprovalDate { get; set; }
         public int? ClerkId { get; set; }
         public string? Notes { get; set; }
+        public DateTime CreatedAt { get; set; }
         public List<MonthlyIncomeDto> MonthlyIncomes { get; set; } = new();
         public List<ReimbursementRequestDto> PastRequests { get; set; } = new();
     }
@@ -65,6 +66,7 @@ namespace FinancialReimbursementSystem.Dtos
     {
         public int RequestId { get; set; }
         public int ClerkId { get; set; }
+        public string RejectionReason { get; set; } = string.Empty;
     }
 
     public class EligibilityResultDto

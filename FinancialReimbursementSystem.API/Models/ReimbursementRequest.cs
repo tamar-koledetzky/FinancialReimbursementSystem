@@ -11,6 +11,7 @@ namespace FinancialReimbursementSystem.Models
         Rejected
     }
 
+    [Table("ReimbursementRequests")]
     public class ReimbursementRequest
     {
         [Key]
@@ -41,10 +42,8 @@ namespace FinancialReimbursementSystem.Models
         [StringLength(1000)]
         public string? Notes { get; set; }
 
-        [Column(TypeName = "datetime2")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        [Column(TypeName = "datetime2")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation properties

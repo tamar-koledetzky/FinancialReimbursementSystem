@@ -6,33 +6,32 @@ GO
 
 USE FinancialReimbursementDB;
 GO
--- Drop existing objects if they exist (for clean recreation)
+
+-- Drop existing objects if they exist
 IF OBJECT_ID('dbo.sp_CalculateEligibility', 'P') IS NOT NULL
     DROP PROCEDURE dbo.sp_CalculateEligibility;
 GO
-
 IF OBJECT_ID('dbo.sp_ApproveReimbursement', 'P') IS NOT NULL
     DROP PROCEDURE dbo.sp_ApproveReimbursement;
 GO
-
+IF OBJECT_ID('dbo.sp_RejectReimbursement', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.sp_RejectReimbursement;
+GO
 IF OBJECT_ID('dbo.ReimbursementRequests', 'U') IS NOT NULL
     DROP TABLE dbo.ReimbursementRequests;
 GO
-
 IF OBJECT_ID('dbo.MonthlyIncome', 'U') IS NOT NULL
     DROP TABLE dbo.MonthlyIncome;
 GO
-
 IF OBJECT_ID('dbo.Citizens', 'U') IS NOT NULL
     DROP TABLE dbo.Citizens;
 GO
-
-IF OBJECT_ID('dbo.Budget', 'U') IS NOT NULL
-    DROP TABLE dbo.Budget;
+IF OBJECT_ID('dbo.Budgets', 'U') IS NOT NULL
+    DROP TABLE dbo.Budgets;
 GO
 
--- Create Budget table
-CREATE TABLE dbo.Budget (
+-- Create Budgets table
+CREATE TABLE dbo.Budgets (
     BudgetId INT IDENTITY(1,1) PRIMARY KEY,
     Year INT NOT NULL,
     Month INT NOT NULL,
@@ -41,7 +40,7 @@ CREATE TABLE dbo.Budget (
     RemainingAmount AS (TotalAmount - UsedAmount) PERSISTED,
     CreatedAt DATETIME2 DEFAULT GETDATE(),
     UpdatedAt DATETIME2 DEFAULT GETDATE(),
-    CONSTRAINT UQ_Budget_Year_Month UNIQUE (Year, Month)
+    CONSTRAINT UQ_Budgets_Year_Month UNIQUE (Year, Month)
 );
 GO
 
@@ -68,10 +67,10 @@ CREATE TABLE dbo.MonthlyIncome (
     NetIncome DECIMAL(18,2) NOT NULL,
     CreatedAt DATETIME2 DEFAULT GETDATE(),
     UpdatedAt DATETIME2 DEFAULT GETDATE(),
-    CONSTRAINT FK_MonthlyIncome_Citizen FOREIGN KEY (CitizenId) REFERENCES dbo.Citizens(CitizenId),
-    CONSTRAINT UQ_MonthlyIncome_Citizen_Year_Month UNIQUE (CitizenId, Year, Month),
-    CONSTRAINT CK_MonthlyIncome_Month CHECK (Month BETWEEN 1 AND 12),
-    CONSTRAINT CK_MonthlyIncome_Income CHECK (GrossIncome >= 0 AND NetIncome >= 0)
+    CONSTRAINT FK_MonthlyIncomes_Citizen FOREIGN KEY (CitizenId) REFERENCES dbo.Citizens(CitizenId),
+    CONSTRAINT UQ_MonthlyIncomes_Citizen_Year_Month UNIQUE (CitizenId, Year, Month),
+    CONSTRAINT CK_MonthlyIncomes_Month CHECK (Month BETWEEN 1 AND 12),
+    CONSTRAINT CK_MonthlyIncomes_Income CHECK (GrossIncome >= 0 AND NetIncome >= 0)
 );
 GO
 
@@ -81,12 +80,12 @@ CREATE TABLE dbo.ReimbursementRequests (
     CitizenId INT NOT NULL,
     TaxYear INT NOT NULL,
     RequestDate DATETIME2 DEFAULT GETDATE(),
-    Status NVARCHAR(50) NOT NULL DEFAULT 'PendingCalculation', -- PendingCalculation, Calculated, Approved, Rejected
+    Status NVARCHAR(50) NOT NULL DEFAULT 'PendingCalculation',
     CalculatedAmount DECIMAL(18,2),
     ApprovedAmount DECIMAL(18,2),
     CalculationDate DATETIME2,
     ApprovalDate DATETIME2,
-    ClerkId INT, -- Reference to clerk who processed the request
+    ClerkId INT,
     Notes NVARCHAR(1000),
     CreatedAt DATETIME2 DEFAULT GETDATE(),
     UpdatedAt DATETIME2 DEFAULT GETDATE(),
@@ -96,77 +95,13 @@ CREATE TABLE dbo.ReimbursementRequests (
 );
 GO
 
--- Create indexes for better performance
-CREATE INDEX IX_MonthlyIncome_Citizen_Year ON dbo.MonthlyIncome(CitizenId, Year);
+-- Create indexes
+CREATE INDEX IX_MonthlyIncomes_Citizen_Year ON dbo.MonthlyIncome(CitizenId, Year);
 CREATE INDEX IX_ReimbursementRequests_Citizen_Status ON dbo.ReimbursementRequests(CitizenId, Status);
 CREATE INDEX IX_ReimbursementRequests_Status_TaxYear ON dbo.ReimbursementRequests(Status, TaxYear);
 GO
 
--- Insert sample budget data
-INSERT INTO dbo.Budget (Year, Month, TotalAmount) VALUES
-(2026, 1, 1000000.00),
-(2026, 2, 1000000.00),
-(2026, 3, 1000000.00),
-(2026, 4, 1000000.00),
-(2026, 5, 1000000.00),
-(2026, 6, 1000000.00),
-(2026, 7, 1000000.00),
-(2026, 8, 1000000.00),
-(2026, 9, 1000000.00),
-(2026, 10, 1000000.00),
-(2026, 11, 1000000.00),
-(2026, 12, 1000000.00);
-GO
-
--- Insert sample citizens
-INSERT INTO dbo.Citizens (IdentityNumber, FirstName, LastName, Email, Phone) VALUES
-('123456789', 'David', 'Cohen', 'david.cohen@email.com', '0501234567'),
-('987654321', 'Sarah', 'Levy', 'sarah.levy@email.com', '0529876543'),
-('456789123', 'Moshe', 'Goldberg', 'moshe.goldberg@email.com', '0544567891');
-GO
-
--- Insert sample monthly income data
-INSERT INTO dbo.MonthlyIncome (CitizenId, Year, Month, GrossIncome, NetIncome) VALUES
--- David Cohen - 2023
-(1, 2023, 1, 6000.00, 4800.00),
-(1, 2023, 2, 6200.00, 4960.00),
-(1, 2023, 3, 5800.00, 4640.00),
-(1, 2023, 4, 6100.00, 4880.00),
-(1, 2023, 5, 5900.00, 4720.00),
-(1, 2023, 6, 6300.00, 5040.00),
-(1, 2023, 7, 6500.00, 5200.00),
-(1, 2023, 8, 6200.00, 4960.00),
-(1, 2023, 9, 6000.00, 4800.00),
-(1, 2023, 10, 5800.00, 4640.00),
-(1, 2023, 11, 6100.00, 4880.00),
-(1, 2023, 12, 6400.00, 5120.00),
--- Sarah Levy - 2023
-(2, 2023, 1, 8500.00, 6800.00),
-(2, 2023, 2, 8700.00, 6960.00),
-(2, 2023, 3, 8300.00, 6640.00),
-(2, 2023, 4, 8600.00, 6880.00),
-(2, 2023, 5, 8400.00, 6720.00),
-(2, 2023, 6, 8800.00, 7040.00),
-(2, 2023, 7, 8900.00, 7120.00),
-(2, 2023, 8, 8700.00, 6960.00),
-(2, 2023, 9, 8500.00, 6800.00),
-(2, 2023, 10, 8300.00, 6640.00),
-(2, 2023, 11, 8600.00, 6880.00),
-(2, 2023, 12, 8800.00, 7040.00),
--- Moshe Goldberg - 2023
-(3, 2023, 1, 4500.00, 3600.00),
-(3, 2023, 2, 4700.00, 3760.00),
-(3, 2023, 3, 4300.00, 3440.00),
-(3, 2023, 4, 4600.00, 3680.00),
-(3, 2023, 5, 4400.00, 3520.00),
-(3, 2023, 6, 4800.00, 3840.00),
-(3, 2023, 7, 4900.00, 3920.00),
-(3, 2023, 8, 4700.00, 3760.00),
-(3, 2023, 9, 4500.00, 3600.00),
-(3, 2023, 10, 4300.00, 3440.00),
-(3, 2023, 11, 4600.00, 3680.00),
-(3, 2023, 12, 4800.00, 3840.00);
-GO
+-- Stored Procedures 
 
 -- Create stored procedure for calculating eligibility
 CREATE PROCEDURE dbo.sp_CalculateEligibility
@@ -304,7 +239,7 @@ BEGIN
         END
 
         -- Atomic budget update
-        UPDATE dbo.Budget WITH (UPDLOCK, HOLDLOCK)
+        UPDATE dbo.Budgets WITH (UPDLOCK, HOLDLOCK)
         SET UsedAmount = UsedAmount + @ApprovedAmount
         WHERE Year = YEAR(GETDATE())
           AND Month = MONTH(GETDATE())
@@ -338,11 +273,101 @@ BEGIN
 END
 GO
 
--- Insert sample reimbursement requests
-INSERT INTO dbo.ReimbursementRequests (CitizenId, TaxYear, Status) VALUES
-(1, 2023, 'PendingCalculation'),
-(2, 2023, 'PendingCalculation'),
-(3, 2023, 'PendingCalculation');
+-- Create stored procedure for rejecting reimbursement
+CREATE PROCEDURE dbo.sp_RejectReimbursement
+    @RequestId INT,
+    @ClerkId INT,
+    @RejectionReason NVARCHAR(500),
+    @IsRejected BIT OUTPUT,
+    @ErrorMessage NVARCHAR(500) OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        DECLARE @Status NVARCHAR(50);
+
+        -- Lock request row
+        SELECT @Status = Status
+        FROM dbo.ReimbursementRequests WITH (UPDLOCK, HOLDLOCK)
+        WHERE RequestId = @RequestId;
+
+        IF @Status IS NULL
+        BEGIN
+            SET @ErrorMessage = 'Request not found';
+            THROW 50020, @ErrorMessage, 1;
+        END
+
+        IF @Status IN ('Approved', 'Rejected')
+        BEGIN
+            SET @ErrorMessage = 'Request is already processed';
+            THROW 50021, @ErrorMessage, 1;
+        END
+
+        UPDATE dbo.ReimbursementRequests
+        SET Status = 'Rejected',
+            ApprovalDate = GETDATE(),
+            ClerkId = @ClerkId,
+            Notes = @RejectionReason
+        WHERE RequestId = @RequestId;
+
+        SET @IsRejected = 1;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+
+        SET @IsRejected = 0;
+        SET @ErrorMessage = ERROR_MESSAGE();
+    END CATCH
+END
 GO
 
+-- Create stored procedure for getting current budget
+CREATE PROCEDURE dbo.sp_GetCurrentBudget
+    @TotalAmount DECIMAL(18,2) OUTPUT,
+    @UsedAmount DECIMAL(18,2) OUTPUT,
+    @RemainingAmount DECIMAL(18,2) OUTPUT,
+    @Message NVARCHAR(500) OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        DECLARE @BudgetId INT;
+
+        SELECT 
+            @BudgetId = BudgetId,
+            @TotalAmount = TotalAmount,
+            @UsedAmount = UsedAmount,
+            @RemainingAmount = TotalAmount - UsedAmount
+        FROM dbo.Budgets
+        WHERE Year = YEAR(GETDATE())
+          AND Month = MONTH(GETDATE());
+
+        IF @BudgetId IS NULL
+        BEGIN
+            SET @Message = 'No budget found for current month';
+            SET @TotalAmount = 0;
+            SET @UsedAmount = 0;
+            SET @RemainingAmount = 0;
+        END
+        ELSE
+        BEGIN
+            SET @Message = 'Budget retrieved successfully';
+        END
+    END TRY
+    BEGIN CATCH
+        SET @Message = ERROR_MESSAGE();
+        SET @TotalAmount = 0;
+        SET @UsedAmount = 0;
+        SET @RemainingAmount = 0;
+    END CATCH
+END
+GO
 PRINT 'Database schema created successfully!';

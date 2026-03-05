@@ -31,7 +31,7 @@ namespace FinancialReimbursementSystem.Services
             var requests = await _context.ReimbursementRequests
                 .Include(r => r.Citizen)
                 .Where(r => r.Status == "PendingCalculation" || r.Status == "Calculated")
-                .OrderBy(r => r.RequestDate)
+                .OrderBy(r => r.RequestId)
                 .ToListAsync();
 
             return requests.Select(r => new ReimbursementRequestDto
@@ -48,7 +48,8 @@ namespace FinancialReimbursementSystem.Services
                 CalculationDate = r.CalculationDate,
                 ApprovalDate = r.ApprovalDate,
                 ClerkId = r.ClerkId,
-                Notes = r.Notes
+                Notes = r.Notes,
+                CreatedAt = r.CreatedAt
             }).ToList();
         }
 
@@ -88,6 +89,7 @@ namespace FinancialReimbursementSystem.Services
                 ApprovalDate = request.ApprovalDate,
                 ClerkId = request.ClerkId,
                 Notes = request.Notes,
+                CreatedAt = request.CreatedAt,
                 MonthlyIncomes = monthlyIncomes.Select(mi => new MonthlyIncomeDto
                 {
                     IncomeId = mi.IncomeId,
@@ -112,7 +114,8 @@ namespace FinancialReimbursementSystem.Services
                     CalculationDate = pr.CalculationDate,
                     ApprovalDate = pr.ApprovalDate,
                     ClerkId = pr.ClerkId,
-                    Notes = pr.Notes
+                    Notes = pr.Notes,
+                    CreatedAt = pr.CreatedAt
                 }).ToList()
             };
         }
@@ -131,30 +134,38 @@ namespace FinancialReimbursementSystem.Services
                 var requestIdParam = new SqlParameter("@RequestId", requestId);
                 command.Parameters.Add(requestIdParam);
 
-                var eligibleAmountParam = new SqlParameter("@EligibleAmount", System.Data.SqlDbType.Decimal)
+                var calculatedAmountParam = new SqlParameter("@CalculatedAmount", System.Data.SqlDbType.Decimal)
                 {
                     Direction = System.Data.ParameterDirection.Output,
                     Precision = 18,
                     Scale = 2
                 };
-                command.Parameters.Add(eligibleAmountParam);
+                command.Parameters.Add(calculatedAmountParam);
 
-                var messageParam = new SqlParameter("@Message", System.Data.SqlDbType.NVarChar, 500)
+                var isEligibleParam = new SqlParameter("@IsEligible", System.Data.SqlDbType.Bit)
                 {
                     Direction = System.Data.ParameterDirection.Output
                 };
-                command.Parameters.Add(messageParam);
+                command.Parameters.Add(isEligibleParam);
+
+                var errorMessageParam = new SqlParameter("@ErrorMessage", System.Data.SqlDbType.NVarChar, 500)
+                {
+                    Direction = System.Data.ParameterDirection.Output
+                };
+                command.Parameters.Add(errorMessageParam);
 
                 await command.ExecuteNonQueryAsync();
 
-                var eligibleAmount = (decimal?)eligibleAmountParam.Value ?? 0;
-                var message = messageParam.Value?.ToString() ?? "Success";
+                var calculatedAmount = (decimal?)calculatedAmountParam.Value ?? 0;
+                var isEligible = (bool?)isEligibleParam.Value ?? false;
+                var errorMessage = errorMessageParam.Value?.ToString() ?? "";
 
                 return new EligibilityResultDto
                 {
-                    IsEligible = eligibleAmount > 0,
-                    CalculatedAmount = eligibleAmount,
-                    Message = message
+                    IsEligible = isEligible,
+                    CalculatedAmount = calculatedAmount,
+                    ErrorMessage = errorMessage,
+                    Message = isEligible ? "Calculation completed successfully" : errorMessage
                 };
             }
             catch (Exception ex)
@@ -238,6 +249,9 @@ namespace FinancialReimbursementSystem.Services
                 var clerkIdParam = new SqlParameter("@ClerkId", dto.ClerkId);
                 command.Parameters.Add(clerkIdParam);
 
+                var rejectionReasonParam = new SqlParameter("@RejectionReason", dto.RejectionReason);
+                command.Parameters.Add(rejectionReasonParam);
+
                 var isRejectedParam = new SqlParameter("@IsRejected", System.Data.SqlDbType.Bit)
                 {
                     Direction = System.Data.ParameterDirection.Output
@@ -280,7 +294,7 @@ namespace FinancialReimbursementSystem.Services
 
             var requests = await _context.ReimbursementRequests
                 .Where(r => r.CitizenId == citizen.CitizenId)
-                .OrderByDescending(r => r.RequestDate)
+                .OrderByDescending(r => r.RequestId)
                 .ToListAsync();
 
             var lastRequest = requests.FirstOrDefault();
@@ -305,7 +319,8 @@ namespace FinancialReimbursementSystem.Services
                     CalculationDate = lastRequest.CalculationDate,
                     ApprovalDate = lastRequest.ApprovalDate,
                     ClerkId = lastRequest.ClerkId,
-                    Notes = lastRequest.Notes
+                    Notes = lastRequest.Notes,
+                    CreatedAt = lastRequest.CreatedAt
                 } : null,
                 RequestHistory = requestHistory.Select(r => new ReimbursementRequestDto
                 {
@@ -321,7 +336,8 @@ namespace FinancialReimbursementSystem.Services
                     CalculationDate = r.CalculationDate,
                     ApprovalDate = r.ApprovalDate,
                     ClerkId = r.ClerkId,
-                    Notes = r.Notes
+                    Notes = r.Notes,
+                    CreatedAt = r.CreatedAt
                 }).ToList()
             };
         }
@@ -372,25 +388,23 @@ namespace FinancialReimbursementSystem.Services
                 var totalAmount = (decimal?)totalAmountParam.Value;
                 var usedAmount = (decimal?)usedAmountParam.Value;
                 var remainingAmount = (decimal?)remainingAmountParam.Value;
-                var message = messageParam.Value?.ToString() ?? "";
 
                 if (totalAmount == null || totalAmount == 0)
                     return null;
 
                 return new BudgetDto
                 {
-                    BudgetId = 0, // Not relevant for current budget
+                    BudgetId = 0,
                     Year = DateTime.Now.Year,
                     Month = DateTime.Now.Month,
                     TotalAmount = totalAmount.Value,
                     UsedAmount = usedAmount ?? 0,
-                    RemainingAmount = remainingAmount ?? 0,
-                    CreatedAt = DateTime.Now
+                    RemainingAmount = remainingAmount ?? 0
                 };
             }
-            catch (Exception ex)
+            catch
             {
-                // Fallback to EF Core approach if stored procedure fails
+                // Fallback to EF Core
                 var budget = await _context.Budgets
                     .Where(b => b.Year == DateTime.Now.Year && b.Month == DateTime.Now.Month)
                     .FirstOrDefaultAsync();

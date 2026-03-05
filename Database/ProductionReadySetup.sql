@@ -1,51 +1,45 @@
--- PRODUCTION READY DATABASE SETUP
--- Clean, professional, no hardcoded values
+USE FinancialReimbursementDB;
+GO
 
--- Clean all existing data
-DELETE FROM dbo.MonthlyIncomes;
-DELETE FROM dbo.Citizens;
+-- Insert sample budgets
+INSERT INTO dbo.Budgets (Year, Month, TotalAmount) VALUES
+(2026, 1, 1000000.00), (2026, 2, 1000000.00), (2026, 3, 1000000.00),
+(2026, 4, 1000000.00), (2026, 5, 1000000.00), (2026, 6, 1000000.00),
+(2026, 7, 1000000.00), (2026, 8, 1000000.00), (2026, 9, 1000000.00),
+(2026, 10, 1000000.00), (2026, 11, 1000000.00), (2026, 12, 1000000.00);
+GO
 
--- Insert professional test data
-INSERT INTO dbo.Citizens (FirstName, LastName, IdentityNumber, Email, Phone, CreatedAt)
-VALUES 
-    ('דוד', 'כהן', '111111111', 'dod.cohen@email.com', '050-1111111', GETDATE()),
-    ('שרה', 'לוי', '222222222', 'sarah.levi@email.com', '050-2222222', GETDATE()),
-    ('יוסף', 'מזרחי', '333333333', 'yosef.mizrachi@email.com', '050-3333333', GETDATE()),
-    ('רחל', 'אברהם', '444444444', 'rachel.avraham@email.com', '050-4444444', GETDATE()),
-    ('משה', 'גולדברג', '555555555', 'moshe.goldberg@email.com', '050-5555555', GETDATE());
+-- Insert sample citizens
+INSERT INTO dbo.Citizens (IdentityNumber, FirstName, LastName, Email, Phone) VALUES
+('123456789', 'David', 'Cohen', 'david.cohen@email.com', '0501234567'),
+('987654321', 'Sarah', 'Levy', 'sarah.levy@email.com', '0529876543'),
+('456789123', 'Moshe', 'Goldberg', 'moshe.goldberg@email.com', '0544567891');
+GO
 
--- Insert realistic monthly income data
-INSERT INTO dbo.MonthlyIncomes (CitizenId, Year, Month, GrossIncome, NetIncome)
-VALUES 
-    -- Low income citizens (eligible)
-    (1, 2023, 1, 4500, 4100), (1, 2023, 2, 4600, 4200), (1, 2023, 3, 4400, 4000),
-    (1, 2023, 4, 4700, 4300), (1, 2023, 5, 4500, 4100), (1, 2023, 6, 4600, 4200),
-    (5, 2023, 1, 4200, 3800), (5, 2023, 2, 4300, 3900), (5, 2023, 3, 4100, 3700),
-    (5, 2023, 4, 4400, 4000), (5, 2023, 5, 4200, 3800), (5, 2023, 6, 4300, 3900),
-    
-    -- Medium income citizens (eligible)
-    (2, 2023, 1, 7500, 6800), (2, 2023, 2, 7700, 7000), (2, 2023, 3, 7300, 6600),
-    (2, 2023, 4, 7800, 7100), (2, 2023, 5, 7600, 6900), (2, 2023, 6, 7700, 7000),
-    (4, 2023, 1, 6800, 6200), (4, 2023, 2, 7000, 6400), (4, 2023, 3, 6600, 6000),
-    (4, 2023, 4, 6900, 6300), (4, 2023, 5, 6700, 6100), (4, 2023, 6, 6800, 6200),
-    
-    -- High income citizen (not eligible)
-    (3, 2023, 1, 15000, 13500), (3, 2023, 2, 15500, 14000), (3, 2023, 3, 14800, 13300),
-    (3, 2023, 4, 15200, 13700), (3, 2023, 5, 15000, 13500), (3, 2023, 6, 15300, 13800);
+-- Insert sample monthly income
+INSERT INTO dbo.MonthlyIncome (CitizenId, Year, Month, GrossIncome, NetIncome) VALUES
+-- David Cohen - 2023
+(1, 2023, 1, 6000.00, 4800.00),
+(1, 2023, 2, 6200.00, 4960.00),
+(1, 2023, 3, 5800.00, 4640.00),
+(1, 2023, 4, 6100.00, 4880.00),
+(1, 2023, 5, 5900.00, 4720.00),
+(1, 2023, 6, 6300.00, 5040.00),
+(1, 2023, 7, 6500.00, 5200.00),
+(1, 2023, 8, 6200.00, 4960.00),
+(1, 2023, 9, 6000.00, 4800.00),
+(1, 2023, 10, 5800.00, 4640.00),
+(1, 2023, 11, 6100.00, 4880.00),
+(1, 2023, 12, 6400.00, 5120.00),
+-- Sarah Levy - 2023 
+(2, 2023, 1, 8500.00, 6800.00), (2, 2023, 2, 8700.00, 6960.00), (2, 2023, 3, 8300.00, 6640.00), (2, 2023, 4, 8600.00, 6880.00), (2, 2023, 5, 8400.00, 6720.00), (2, 2023, 6, 8800.00, 7040.00), (2, 2023, 7, 8900.00, 7120.00), (2, 2023, 8, 8700.00, 6960.00), (2, 2023, 9, 8500.00, 6800.00), (2, 2023, 10, 8300.00, 6640.00), (2, 2023, 11, 8600.00, 6880.00), (2, 2023, 12, 8800.00, 7040.00),
+-- Moshe Goldberg - 2023
+(3, 2023, 1, 4500.00, 3600.00), (3, 2023, 2, 4700.00, 3760.00), (3, 2023, 3, 4300.00, 3440.00), (3, 2023, 4, 4600.00, 3680.00), (3, 2023, 5, 4400.00, 3520.00), (3, 2023, 6, 4800.00, 3840.00), (3, 2023, 7, 4900.00, 3920.00), (3, 2023, 8, 4700.00, 3760.00), (3, 2023, 9, 4500.00, 3600.00), (3, 2023, 10, 4300.00, 3440.00), (3, 2023, 11, 4600.00, 3680.00), (3, 2023, 12, 4800.00, 3840.00);
+GO
 
--- Show professional summary
-SELECT '✅ PRODUCTION DATABASE SETUP COMPLETED' as Status;
-SELECT '📊 Data Summary:' as Info;
-SELECT 
-    COUNT(DISTINCT c.CitizenId) as TotalCitizens,
-    (SELECT COUNT(*) FROM dbo.Citizens c2 
-     JOIN dbo.MonthlyIncomes mi2 ON c2.CitizenId = mi2.CitizenId 
-     WHERE mi2.GrossIncome < 5000 GROUP BY c2.CitizenId HAVING AVG(mi2.GrossIncome) < 5000) as LowIncome,
-    (SELECT COUNT(*) FROM dbo.Citizens c3 
-     JOIN dbo.MonthlyIncomes mi3 ON c3.CitizenId = mi3.CitizenId 
-     WHERE mi3.GrossIncome BETWEEN 5000 AND 10000 GROUP BY c3.CitizenId HAVING AVG(mi3.GrossIncome) BETWEEN 5000 AND 10000) as MediumIncome,
-    (SELECT COUNT(*) FROM dbo.Citizens c4 
-     JOIN dbo.MonthlyIncomes mi4 ON c4.CitizenId = mi4.CitizenId 
-     WHERE mi4.GrossIncome > 10000 GROUP BY c4.CitizenId HAVING AVG(mi4.GrossIncome) > 10000) as HighIncome
-FROM dbo.Citizens c
-JOIN dbo.MonthlyIncomes mi ON c.CitizenId = mi.CitizenId;
+-- Insert sample reimbursement requests
+INSERT INTO dbo.ReimbursementRequests (CitizenId, TaxYear, Status) VALUES
+(1, 2023, 'PendingCalculation'),
+(2, 2023, 'PendingCalculation'),
+(3, 2023, 'PendingCalculation');
+GO

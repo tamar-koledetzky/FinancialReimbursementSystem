@@ -37,10 +37,11 @@ export const clerkApi = {
     return response.data;
   },
 
-  rejectReimbursement: async (requestId: number, clerkId: number): Promise<ApprovalResult> => {
+  rejectReimbursement: async (requestId: number, clerkId: number, rejectionReason: string): Promise<ApprovalResult> => {
     const response = await api.post('/clerk/reject-reimbursement', {
       requestId,
       clerkId,
+      rejectionReason,
     });
     return response.data;
   },

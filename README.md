@@ -1,266 +1,201 @@
 # Financial Reimbursement System
 
-A comprehensive financial reimbursement system built with .NET Core Web API, SQL Server, and React TypeScript frontend. This system manages citizen reimbursement requests with complex business logic for eligibility calculation and budget management.
+A financial reimbursement eligibility system built with .NET Web API, SQL Server and React.
 
-## 🚀 Quick Start
+The system allows a clerk to calculate reimbursement eligibility for citizens based on their income history and approve requests while ensuring that monthly budget cannot be exceeded, even when multiple approvals occur concurrently.
 
-### **Installation & Setup**
-- **📖 [Installation Guide](./הוראות_התקנה_והרצה.md)** - הוראות התקנה מלאות בעברית
-
-### **One-Command Setup**
-```bash
-git clone <REPOSITORY_URL>
-cd FinancialReimbursementSystem
-# Follow הוראות_התקנה_והרצה.md for database setup
-# Backend: cd FinancialReimbursementSystem.API && dotnet run
-# Frontend: cd frontend && npm install && npm start
-```
-
-## Features
-
-### Core Functionality
-- **Citizen Management**: Register and manage citizen information
-- **Monthly Income Tracking**: Track monthly income data for each citizen
-- **Reimbursement Requests**: Submit and process reimbursement requests
-- **Eligibility Calculation**: Complex tiered calculation based on average income
-- **Budget Management**: Monthly budget tracking and allocation
-- **Concurrent Processing**: Thread-safe budget allocation to prevent double spending
-
-### Business Logic
-- **Tiered Refund Calculation**:
-  - Average up to 5,000 ILS – 15% refund
-  - Average between 5,000 and 8,000 ILS – 10% refund (cumulative)
-  - Average above 8,000 and up to 9,000 ILS – 5% refund (cumulative)
-  - Average above 9,000 ILS – No refund
-
-- **Eligibility Requirements**:
-  - Minimum 6 months of income data in the tax year
-  - No other approved request for the same tax year
-  - Budget availability check
-
-### User Interfaces
-- **Clerk Dashboard**:
-  - View all pending reimbursement requests
-  - Detailed request view with income history
-  - Eligibility calculation and approval workflow
-  - Real-time budget information
-
-- **Citizen Portal**:
-  - Check reimbursement status by ID number
-  - View request history and approved amounts
-  - Simple, citizen-friendly interface
-
-## Technology Stack
+## Technologies
 
 ### Backend
-- **.NET Core 6.0** - Web API framework
-- **Entity Framework Core 6.0** - ORM for database operations
-- **SQL Server** - Database with stored procedures for complex calculations
-- **C#** - Programming language
+- **.NET 8 / ASP.NET Core Web API**
+- **Entity Framework Core**
+- **C#**
 
 ### Frontend
-- **React 18** - UI framework
-- **TypeScript** - Type-safe JavaScript
-- **Tailwind CSS** - Utility-first CSS framework
-- **React Router** - Client-side routing
-- **Axios** - HTTP client for API calls
+- **React**
+- **TypeScript**
+- **Tailwind CSS**
+- **Axios**
 
 ### Database
-- **SQL Server** - Primary database
-- **Stored Procedures** - Complex business logic implementation
-- **Concurrency Control** - Row-level locking for budget operations
+- **SQL Server**
+- **Stored Procedures for core business logic:**
+  - `sp_CalculateEligibility` - Calculates reimbursement eligibility
+  - `sp_ApproveReimbursement` - Approves reimbursement with budget check
+  - `sp_RejectReimbursement` - Rejects reimbursement with reason
 
-## Installation Instructions
+## Project Structure
 
-### Prerequisites
-- **.NET Core 6.0 SDK** or later
-- **SQL Server 2019** or later
-- **Node.js 16.0** or later
-- **npm** or yarn package manager
-
-### Database Setup
-
-1. **Create Database**
-   ```sql
-   CREATE DATABASE FinancialReimbursementDB;
-   ```
-
-2. **Run Schema Script**
-   - Execute the `Database/Schema.sql` script in SQL Server Management Studio
-   - This will create all tables, stored procedures, and sample data
-
-### Backend Setup
-
-1. **Navigate to Backend Directory**
-   ```bash
-   cd FinancialReimbursementSystem/FinancialReimbursementSystem.API
-   ```
-
-2. **Restore NuGet Packages**
-   ```bash
-   dotnet restore
-   ```
-
-3. **Update Connection String**
-   - Edit `appsettings.json`
-   - Update the `DefaultConnection` string to match your SQL Server configuration
-
-4. **Run the API**
-   ```bash
-   dotnet run
-   ```
-   
-   The API will be available at `https://localhost:7001`
-
-### Frontend Setup
-
-1. **Navigate to Frontend Directory**
-   ```bash
-   cd frontend
-   ```
-
-2. **Install Dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Start Development Server**
-   ```bash
-   npm start
-   ```
-   
-   The frontend will be available at `http://localhost:3000`
-
-### Environment Configuration
-
-Create a `.env` file in the frontend directory:
-```env
-REACT_APP_API_URL=https://localhost:7001/api
+```
+FinancialReimbursementSystem
+│
+├── FinancialReimbursementSystem.API   # .NET Web API
+├── frontend                           # React application
+├── Database
+│   ├── Schema.sql               # Database schema and stored procedures
+│   ├── ProductionReadySetup.sql # Test data and budget setup
+│   └── README.md                # Database documentation
+│
+└── README.md
 ```
 
-## Usage
+## System Architecture
 
-### Clerk Workflow
+The system is composed of three main layers:
 
-1. **Access Clerk Dashboard**
-   - Navigate to `http://localhost:3000/clerk`
-   - View all pending reimbursement requests
+### Frontend (React)
+Responsible for user interface.
 
-2. **Process Request**
-   - Click on any request to view details
-   - Review citizen information and income data
-   - Click "Calculate Eligibility" to determine refund amount
-   - Review budget availability
-   - Click "Approve Reimbursement" to approve and allocate budget
+Main responsibilities:
+- Display citizen and clerk dashboards
+- Send API requests to backend
+- Display eligibility results and request status
 
-3. **Budget Management**
-   - Real-time budget information displayed on request details page
-   - Automatic budget deduction upon approval
-   - Concurrent request handling prevents overspending
+### Backend (.NET Web API)
+Handles application logic and communication with database.
 
-### Citizen Workflow
+Main responsibilities:
+- Expose REST API endpoints
+- Validate requests
+- Coordinate business operations
+- Call stored procedures for core calculations
 
-1. **Check Status**
-   - Navigate to `http://localhost:3000/citizen`
-   - Enter 9-digit identity number
-   - View current request status and history
+### Database (SQL Server)
+Responsible for persistent data storage and core business logic.
 
-2. **Request Information**
-   - Last request details with approval status
-   - Complete request history with amounts received
-   - Clear status indicators (Pending, Calculated, Approved, Rejected)
+Main components:
+- Tables for citizens, income records and reimbursement requests
+- Monthly budget tracking
+- Stored procedures for:
+  - eligibility calculation
+  - safe reimbursement approval
+  - concurrency-safe budget updates
 
-## API Endpoints
+### Request Processing Flow
+1. Clerk opens a reimbursement request
+2. Backend retrieves citizen income history
+3. Stored procedure calculates eligibility based on income tiers
+4. Clerk reviews calculated amount
+5. If approved, another stored procedure:
+   - checks available budget
+   - locks budget row
+   - updates used budget
+   - updates request status
 
-### Clerk Endpoints
-- `GET /api/clerk/pending-requests` - Get all pending requests
-- `GET /api/clerk/request-details/{id}` - Get detailed request information
-- `POST /api/clerk/calculate-eligibility` - Calculate refund eligibility
-- `POST /api/clerk/approve-reimbursement` - Approve and allocate budget
-- `GET /api/clerk/current-budget` - Get current month budget
+This ensures consistent and safe budget allocation even with concurrent requests.
 
-### Citizen Endpoints
-- `GET /api/citizen/status/{identityNumber}` - Get citizen status and history
+## Setup Instructions
 
-## Database Schema
+### 1. Clone repository
+```bash
+git clone https://github.com/tamar-koledetzky/FinancialReimbursementSystem.git
+cd FinancialReimbursementSystem
+```
 
-### Core Tables
-- **Citizens** - Citizen demographic information
-- **MonthlyIncome** - Monthly income data per citizen
-- **ReimbursementRequests** - Reimbursement request tracking
-- **Budget** - Monthly budget allocation and tracking
+### 2. Database Setup
 
-### Stored Procedures
-- **sp_CalculateEligibility** - Complex eligibility calculation with business rules
-- **sp_ApproveReimbursement** - Budget-safe approval with concurrency control
+Create a database in SQL Server:
+```sql
+CREATE DATABASE FinancialReimbursementDB;
+```
 
-## Security Considerations
+Run the database schema and setup scripts:
+```bash
+# First run the schema
+sqlcmd -S localhost -E -d FinancialReimbursementDB -i "Database\Schema.sql"
 
-- **SQL Injection Protection**: Parameterized queries and stored procedures
-- **Concurrency Control**: Row-level locking prevents budget overspending
-- **Data Validation**: Input validation at both frontend and backend
-- **CORS Configuration**: Properly configured for production environments
+# Then run the data setup
+sqlcmd -S localhost -E -d FinancialReimbursementDB -i "Database\ProductionReadySetup.sql"
+```
 
-## Performance Features
+This will:
+- Create all tables (Citizens, MonthlyIncome, ReimbursementRequests, Budgets)
+- Create stored procedures
+- Insert test data (5 citizens, 30 income records, budget data)
 
-- **Database Indexing**: Optimized queries for common operations
-- **Concurrent Processing**: Thread-safe budget operations
-- **Efficient Calculations**: Database-side business logic for performance
-- **Responsive UI**: Modern React with optimized rendering
+### 3. Run Backend
+
+Navigate to API project:
+```bash
+cd FinancialReimbursementSystem.API
+dotnet restore
+dotnet run
+```
+
+The API will run on:
+http://localhost:5000
+
+### 4. Run Frontend
+```bash
+cd frontend
+npm install
+npm start
+```
+
+The application will run on:
+http://localhost:3000
+
+## Application Interfaces
+
+### Clerk Interface
+http://localhost:3000/clerk
+
+Allows clerk to:
+- View pending reimbursement requests
+- Review citizen income history
+- Calculate eligibility
+- Approve or reject requests
+- View current monthly budget
+
+### Citizen Interface
+http://localhost:3000/citizen
+
+Allows a citizen to:
+- Check reimbursement request status
+- View request history
+- See approved reimbursement amounts
+
+## Business Logic
+
+### Eligibility Calculation
+
+Refund percentage is determined by citizen's average monthly income:
+
+| Average Income | Refund |
+|---------------|---------|
+| Up to 5,000 ILS | 15% |
+| 5,000 – 8,000 ILS | 10% |
+| 8,000 – 9,000 ILS | 5% |
+| Above 9,000 ILS | Not eligible |
+
+Additional conditions:
+- At least 6 months of income data in tax year
+- Only one approved request per tax year
+- Approval allowed only if budget is available
+
+### Budget Concurrency Protection
+
+The system ensures that monthly budget cannot be exceeded by multiple simultaneous approvals.
+
+This is implemented using:
+- SQL transactions
+- Row-level locking
+- Stored procedure based approval logic
 
 ## Sample Data
 
-The database schema includes sample data for testing:
-- 3 sample citizens with income data
-- 12 months of income records for each citizen
-- Sample reimbursement requests in various statuses
-- Monthly budget configuration for the current year
+The database scripts include sample data:
+- Citizens
+- Monthly income records
+- Reimbursement requests
+- Monthly budget configuration
 
-## Development Notes
+This allows the system to be tested immediately after installation.
 
-### Additional Features Implemented
-- **Real-time Budget Tracking**: Live budget updates during approval process
-- **Comprehensive Error Handling**: User-friendly error messages
-- **Responsive Design**: Mobile-friendly interface using Tailwind CSS
-- **Type Safety**: Full TypeScript implementation
-- **Modern UI/UX**: Clean, intuitive interface design
+## Notes
 
-### Code Quality
-- **Clean Architecture**: Separation of concerns with service layers
-- **TypeScript Interfaces**: Strong typing for all data structures
-- **Error Boundaries**: Proper error handling in React components
-- **Logging**: Comprehensive error logging and debugging information
-
-## Testing
-
-### Backend Testing
-```bash
-cd FinancialReimbursementSystem.API
-dotnet test
-```
-
-### Frontend Testing
-```bash
-cd frontend
-npm test
-```
-
-## Deployment
-
-### Backend Deployment
-- Publish API using `dotnet publish`
-- Configure production database connection
-- Set up IIS or appropriate hosting environment
-
-### Frontend Deployment
-- Build using `npm run build`
-- Deploy static files to web server
-- Configure API endpoint for production
-
-## Support
-
-For technical questions or issues, please refer to the code documentation or contact the development team.
-
----
-
-**Note**: This system was developed as a technical assessment and demonstrates advanced programming capabilities including complex business logic implementation, concurrent processing, and modern web development practices.
+This project was developed as part of a technical home assignment and demonstrates:
+- Full-stack development (.NET + React)
+- Implementation of complex business logic in SQL
+- Safe concurrent operations for financial transactions
+- Clean API and frontend separation

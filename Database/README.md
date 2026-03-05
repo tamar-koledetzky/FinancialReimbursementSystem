@@ -7,7 +7,7 @@ This document explains the database setup for the Financial Reimbursement System
 
 ### Tables
 1. **Citizens** - Stores citizen information
-2. **MonthlyIncomes** - Stores monthly income data for each citizen
+2. **MonthlyIncome** - Stores monthly income data for each citizen
 3. **ReimbursementRequests** - Stores reimbursement requests with different statuses
 4. **Budgets** - Stores budget information for each year/month
 
@@ -63,7 +63,7 @@ The system is designed to test these scenarios:
 - `Rejected` - Request rejected
 
 ### Foreign Key Relationships
-- `MonthlyIncomes.CitizenId` → `Citizens.CitizenId`
+- `MonthlyIncome.CitizenId` → `Citizens.CitizenId`
 - `ReimbursementRequests.CitizenId` → `Citizens.CitizenId`
 
 ## 📝 Notes

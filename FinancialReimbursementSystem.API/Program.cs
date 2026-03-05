@@ -13,7 +13,9 @@ builder.Services.AddSwaggerGen();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
     ?? "Server=localhost;Database=FinancialReimbursementDB;Trusted_Connection=true;TrustServerCertificate=true;";
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(connectionString)
+           .EnableSensitiveDataLogging()
+           .LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information));
 
 // Register custom services
 builder.Services.AddScoped<IReimbursementService, ReimbursementService>();
